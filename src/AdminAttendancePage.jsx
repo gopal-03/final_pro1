@@ -6,7 +6,7 @@ function AdminAttendancePage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    axios.get('http://localhost:8080/api/users')
+    axios.get('http://localhost:8080/api2/users')
       .then(response => {
         setUsers(response.data);
       })

@@ -138,10 +138,6 @@ export function Register() {
 
 export function Identify() {
   const [identifiedUser, setIdentifiedUser] = useState("");
-  const [username, setUsername] = useState("");
-  const [mailId, setMailId] = useState("");
-  const [mobNo, setMobNo] = useState("");
-  const [dept, setDept] = useState("");
   const [message, setMessage] = useState("");
   const webcamRef = useRef(null);
 
@@ -160,16 +156,14 @@ export function Identify() {
         faceImage: imageSrc,
       });
       setIdentifiedUser(response.data.username);
-      setUsername(response.data.username);
-      setMailId(response.data.mailId);
-      setMobNo(response.data.mobNo);
-      setDept(response.data.dept);
+      
       await axios.post("http://localhost:8080/api2/attendance", {
-        username,
-        mailId,
-        mobNo,
-        dept
+        username:response.data.username,
+        mailId: response.data.mailId,
+        mobNo: response.data.mobNo,
+        dept: response.data.dept,
       });
+
       setMessage("Identification Successful");
     } catch (error) {
       console.error("Identification error:", error);
