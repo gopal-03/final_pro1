@@ -24,7 +24,7 @@ export function Register() {
       return;
     }
     try {
-      const response = await axios.post("http://localhost:8080/api/register", {
+      const response = await axios.post("https://4a4c-120-56-187-5.ngrok-free.app/api/register", {
         username,
         faceImage: imageSrc,
       });
@@ -87,7 +87,7 @@ export function Identify() {
       return;
     }
     try {
-      const response = await axios.post("http://localhost:8080/api/identify", {
+      const response = await axios.post("https://4a4c-120-56-187-5.ngrok-free.app/api/identify", {
         faceImage: imageSrc,
       });
       setIdentifiedUser(response.data.username);
