@@ -2,6 +2,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { Register, Identify } from './FaceComponents';
+import AdminAttendancePage from './AdminAttendancePage';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
           </ul>
         </nav>
         <Routes>
+          <Route path="/admin" element={<AdminAttendancePage/>}/>
           <Route path="/register" element={<Register />} />
           <Route path="/identify" element={<Identify />} />
           <Route path="*" element={<Register />} />
