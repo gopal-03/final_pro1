@@ -24,7 +24,7 @@ export function Register() {
       return;
     }
     try {
-      const response = await axios.post("http://192.168.1.11:8080/api/register", {
+      const response = await axios.post("http://localhost:8080/api/register", {
         username,
         faceImage: imageSrc,
       });
@@ -53,7 +53,12 @@ export function Register() {
         screenshotFormat="image/jpeg"
         width={300}
         videoConstraints={videoConstraints}
+        onUserMediaError={(err) => {
+          console.error("Camera error:", err);
+          setMessage("Error accessing the camera. Check permissions.");
+        }}
       />
+
       <br />
       <button
         onClick={capture}
@@ -82,7 +87,7 @@ export function Identify() {
       return;
     }
     try {
-      const response = await axios.post("http://192.168.1.11:8080/api/identify", {
+      const response = await axios.post("http://localhost:8080/api/identify", {
         faceImage: imageSrc,
       });
       setIdentifiedUser(response.data.username);
