@@ -10,7 +10,13 @@ const videoConstraints = {
 
 export function Register() {
   const [username, setUsername] = useState("");
+  const [mailId, setMailId] = useState("");
+  const [mobNo, setMobNo] = useState("");
+  const [dept, setDept] = useState("");
+  const [password, setPassword] = useState("");
+  const [rePassword, setRePassword] = useState("");
   const [message, setMessage] = useState("");
+
   const webcamRef = useRef(null);
 
   const capture = async () => {
@@ -23,9 +29,19 @@ export function Register() {
       setMessage("Failed to capture image. Ensure camera access is allowed.");
       return;
     }
+
+    if(password !== rePassword){
+      setMessage("Password Dosen't Matching please verify password");
+      return;
+    }
+
     try {
-      const response = await axios.post("https://4a4c-120-56-187-5.ngrok-free.app/api/register", {
+      const response = await axios.post("http://localhost:8080/api/register", {
         username,
+        mailId,
+        mobNo,
+        dept,
+        password,
         faceImage: imageSrc,
       });
       setMessage(response.data.message || "Registration successful!");
@@ -40,12 +56,60 @@ export function Register() {
       <h2>Register</h2>
       <input
         type="text"
-        placeholder="Enter username"
+        placeholder="Enter Name asPer CollegeID"
         value={username}
         onChange={(e) => setUsername(e.target.value)}
         style={{ marginBottom: "10px", padding: "5px", fontSize: "16px" }}
       />
-      <br />
+      <br/>
+
+      <input
+        type="text"
+        placeholder="Enter MailId"
+        value={mailId}
+        onChange={(e) => setMailId(e.target.value)}
+        style={{ marginBottom: "10px", padding: "5px", fontSize: "16px" }}
+      />
+      <br/>
+
+
+
+      <input
+        type="text"
+        placeholder="Enter MobileNumber"
+        value={mobNo}
+        onChange={(e) => setMobNo(e.target.value)}
+        style={{ marginBottom: "10px", padding: "5px", fontSize: "16px" }}
+      />
+      <br/>
+
+      <input
+        type="text"
+        placeholder="Enter Department"
+        value={dept}
+        onChange={(e) => setDept(e.target.value)}
+        style={{ marginBottom: "10px", padding: "5px", fontSize: "16px" }}
+      />
+      <br/>
+
+      <input
+        type="text"
+        placeholder="Enter Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        style={{ marginBottom: "10px", padding: "5px", fontSize: "16px" }}
+      />
+      <br/>
+
+      <input
+        type="text"
+        placeholder="Re-Enter Password"
+        value={rePassword}
+        onChange={(e) => setRePassword(e.target.value)}
+        style={{ marginBottom: "10px", padding: "5px", fontSize: "16px" }}
+      />
+      <br/>
+
       <Webcam
         audio={false}
         height={300}
@@ -87,7 +151,7 @@ export function Identify() {
       return;
     }
     try {
-      const response = await axios.post("https://4a4c-120-56-187-5.ngrok-free.app/api/identify", {
+      const response = await axios.post("http://localhost:8080/api/identify", {
         faceImage: imageSrc,
       });
       setIdentifiedUser(response.data.username);
