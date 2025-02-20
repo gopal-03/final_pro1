@@ -6,6 +6,7 @@ import AdminLogin from './AdminPage/AdminLogin';
 import AdminDashboard from './AdminPage/AdminDashboard';
 import FaceRegister from './FaceRegister';
 import AttendenceIn from './AttendenceIn';
+import AttendanceList from './AdminPage/AttendanceList';
 
 const App = () => {
   return (
@@ -33,6 +34,7 @@ const App = () => {
           <Route path="/register" element={<AdminRegistration />} />
           <Route path="/login" element={<AdminLogin />} />
           <Route path="/admindashboard" element={<AdminDashboard />} />
+          <Route path="/admindashboard/attendancelist" element={<AttendanceList/>} />
         </Routes>
       </div>
     </Router>

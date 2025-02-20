@@ -7,12 +7,10 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
 
   const handleAttendance = () => {
-    // Redirect to the Attendance page (implement your logic)
-    navigate('/attendance', { state: { username } });
+    navigate("/admindashboard/attendancelist");
   };
 
   const handleRegisteredUsers = () => {
-    // Redirect to the Registered Users page (implement your logic)
     navigate('/registered-users', { state: { username } });
   };
 
