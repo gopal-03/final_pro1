@@ -4,7 +4,14 @@ import axios from 'axios';
 function FaceRegister() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const [username, setUserName] = useState('');
   const [name, setName] = useState('');
+  const [mobNo, setMobNo] = useState(0);
+  const [dept, setDept] = useState('');
+  const [college, setCollege] = useState('');
+  const [age, setAge] = useState(0);
+  const [rePassword, setRePassword] = useState('');
+  const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const [capturedImage, setCapturedImage] = useState(null);
 
@@ -43,8 +50,20 @@ function FaceRegister() {
       setMessage("Please enter a name and capture an image.");
       return;
     }
+
+    if(password !== rePassword){
+      setMessage("password missmatch please verify your password");
+      return;
+    }
+
     const formData = new FormData();
+    formData.append('username', username);
     formData.append('name', name);
+    formData.append('mobNo',mobNo); 
+    formData.append('dept',dept);
+    formData.append('college',college);
+    formData.append('age',age);
+    formData.append('password',password);
     // Convert Blob to File for compatibility with backend's MultipartFile handling
     const file = new File([capturedImage], "capture.png", { type: 'image/png' });
     formData.append('file', file);
@@ -64,9 +83,57 @@ function FaceRegister() {
       <h2>Register Face via Camera</h2>
       <input 
         type="text"
-        placeholder="Enter your name"
+        placeholder="Enter your username"
+        value={username}
+        onChange={(e) => setUserName(e.target.value)}
+      />
+
+      <input 
+        type="text"
+        placeholder="Enter your Name"
         value={name}
         onChange={(e) => setName(e.target.value)}
+      />
+
+      <input 
+        type="number"
+        placeholder="Enter your Mobile No"
+        value={mobNo}
+        onChange={(e) => setMobNo(e.target.value)}
+      />
+
+      <input 
+        type="text"
+        placeholder="Enter your Department"
+        value={dept}
+        onChange={(e) => setDept(e.target.value)}
+      />
+
+<input 
+        type="text"
+        placeholder="Enter your College Namee"
+        value={college}
+        onChange={(e) => setCollege(e.target.value)}
+      />
+
+      <input 
+        type="number"
+        placeholder="Enter your Age"
+        value={age}
+        onChange={(e) => setAge(e.target.value)}
+      />
+
+      <input 
+        type="text"
+        placeholder="Enter your Password"
+        value={rePassword}
+        onChange={(e) => setRePassword(e.target.value)}
+      />
+      <input 
+        type="text"
+        placeholder="Re-Enter your Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
       />
       <div>
         <video ref={videoRef} autoPlay style={{ width: "400px" }}></video>
