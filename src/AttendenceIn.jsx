@@ -46,7 +46,7 @@ function AttendenceIn() {
     formData.append('file', file);
 
     try {
-      const res = await axios.post('http://localhost:8080/api/recognize', formData, {
+      const res = await axios.post('https://ff56-120-60-211-151.ngrok-free.app/api/recognize', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       setResult(res.data);
