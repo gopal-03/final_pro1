@@ -7,6 +7,49 @@ function AttendenceIn() {
   const [result, setResult] = useState('');
   const [capturedImage, setCapturedImage] = useState(null);
 
+  // Get local IP address using WebRTC
+  const getLocalIP = () => {
+    return new Promise((resolve, reject) => {
+      const pc = new RTCPeerConnection({ iceServers: [] });
+      // Create a bogus data channel
+      pc.createDataChannel('');
+      pc.createOffer()
+        .then(offer => pc.setLocalDescription(offer))
+        .catch(err => reject(err));
+      pc.onicecandidate = (ice) => {
+        if (ice && ice.candidate && ice.candidate.candidate) {
+          const candidate = ice.candidate.candidate;
+          const regex = /([0-9]{1,3}(?:\.[0-9]{1,3}){3})/;
+          const match = candidate.match(regex);
+          if (match) {
+            resolve(match[1]);
+            pc.onicecandidate = null;
+          }
+        }
+      };
+      // Timeout if no candidate is found
+      setTimeout(() => {
+        reject('Could not get IP address');
+      }, 1000);
+    });
+  };
+
+  // Get network info from the browser (if available)
+  const getNetworkInfo = () => {
+    const connection =
+      navigator.connection ||
+      navigator.mozConnection ||
+      navigator.webkitConnection;
+    if (connection) {
+      return {
+        effectiveType: connection.effectiveType || 'unknown',
+        downlink: connection.downlink || 'unknown',
+        rtt: connection.rtt || 'unknown'
+      };
+    }
+    return { effectiveType: 'unknown', downlink: 'unknown', rtt: 'unknown' };
+  };
+
   // Start the camera stream on mount
   useEffect(() => {
     navigator.mediaDevices.getUserMedia({ video: true })
@@ -35,20 +78,37 @@ function AttendenceIn() {
     }
   };
 
-  // Send the captured image to the backend for recognition
+  // Send the captured image to the backend for recognition,
+  // including the local IP address and network information.
   const handleRecognize = async () => {
     if (!capturedImage) {
       setResult("Please capture an image first.");
       return;
     }
+
+    let localIP = '';
+    try {
+      localIP = await getLocalIP();
+    } catch (e) {
+      localIP = 'Not available';
+    }
+    const networkInfo = getNetworkInfo();
+
     const formData = new FormData();
+    // Create a File object from the blob
     const file = new File([capturedImage], "capture.png", { type: 'image/png' });
     formData.append('file', file);
+    formData.append('ip', localIP);
+    formData.append('networkInfo', JSON.stringify(networkInfo));
 
     try {
-      const res = await axios.post('https://ff56-120-60-211-151.ngrok-free.app/api/recognize', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const res = await axios.post(
+        'https://ff56-120-60-211-151.ngrok-free.app/api/recognize',
+        formData,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        }
+      );
       setResult(res.data);
     } catch (err) {
       setResult(err.response ? err.response.data : "Error occurred during recognition");
