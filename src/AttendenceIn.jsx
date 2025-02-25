@@ -4,55 +4,15 @@ import axios from 'axios';
 function AttendenceIn() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
   const [result, setResult] = useState('');
-  const [capturedImage, setCapturedImage] = useState(null);
-
-  // Get local IP address using WebRTC
-  const getLocalIP = () => {
-    return new Promise((resolve, reject) => {
-      const pc = new RTCPeerConnection({ iceServers: [] });
-      // Create a bogus data channel
-      pc.createDataChannel('');
-      pc.createOffer()
-        .then(offer => pc.setLocalDescription(offer))
-        .catch(err => reject(err));
-      pc.onicecandidate = (ice) => {
-        if (ice && ice.candidate && ice.candidate.candidate) {
-          const candidate = ice.candidate.candidate;
-          const regex = /([0-9]{1,3}(?:\.[0-9]{1,3}){3})/;
-          const match = candidate.match(regex);
-          if (match) {
-            resolve(match[1]);
-            pc.onicecandidate = null;
-          }
-        }
-      };
-      // Timeout if no candidate is found
-      setTimeout(() => {
-        reject('Could not get IP address');
-      }, 1000);
-    });
-  };
-
-  // Get network info from the browser (if available)
-  const getNetworkInfo = () => {
-    const connection =
-      navigator.connection ||
-      navigator.mozConnection ||
-      navigator.webkitConnection;
-    if (connection) {
-      return {
-        effectiveType: connection.effectiveType || 'unknown',
-        downlink: connection.downlink || 'unknown',
-        rtt: connection.rtt || 'unknown'
-      };
-    }
-    return { effectiveType: 'unknown', downlink: 'unknown', rtt: 'unknown' };
-  };
+  const [captureMode, setCaptureMode] = useState('image'); // "image" or "video"
+  const [capturedMedia, setCapturedMedia] = useState(null);
+  const [recording, setRecording] = useState(false);
 
   // Start the camera stream on mount
   useEffect(() => {
-    navigator.mediaDevices.getUserMedia({ video: true })
+    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
       .then((stream) => {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
@@ -63,7 +23,7 @@ function AttendenceIn() {
       });
   }, []);
 
-  // Capture an image from the video feed
+  // Capture a still image
   const captureImage = () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -73,42 +33,57 @@ function AttendenceIn() {
       const ctx = canvas.getContext('2d');
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       canvas.toBlob((blob) => {
-        setCapturedImage(blob);
+        setCapturedMedia(blob);
       }, 'image/png');
     }
   };
 
-  // Send the captured image to the backend for recognition,
-  // including the local IP address and network information.
+  // Record a short video clip (e.g., 3 seconds)
+  const startRecording = () => {
+    const stream = videoRef.current.srcObject;
+    if (!stream) return;
+    const options = { mimeType: 'video/webm' };
+    const mediaRecorder = new MediaRecorder(stream, options);
+    let chunks = [];
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) {
+        chunks.push(e.data);
+      }
+    };
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      setCapturedMedia(blob);
+      setRecording(false);
+    };
+    mediaRecorder.start();
+    setRecording(true);
+    // Automatically stop recording after 3 seconds
+    setTimeout(() => {
+      mediaRecorder.stop();
+    }, 3000);
+    mediaRecorderRef.current = mediaRecorder;
+  };
+
+  // Handle recognition by sending captured media to backend
   const handleRecognize = async () => {
-    if (!capturedImage) {
-      setResult("Please capture an image first.");
+    if (!capturedMedia) {
+      setResult("Please capture an image or record a video first.");
       return;
     }
-
-    let localIP = '';
-    try {
-      localIP = await getLocalIP();
-    } catch (e) {
-      localIP = 'Not available';
-    }
-    const networkInfo = getNetworkInfo();
-
     const formData = new FormData();
-    // Create a File object from the blob
-    const file = new File([capturedImage], "capture.png", { type: 'image/png' });
+    // If video, the file name and MIME type will trigger the optical flow path in backend.
+    const fileName = captureMode === 'video' ? "capture.webm" : "capture.png";
+    const fileType = captureMode === 'video' ? "video/webm" : "image/png";
+    const file = new File([capturedMedia], fileName, { type: fileType });
     formData.append('file', file);
-    formData.append('ip', localIP);
-    formData.append('networkInfo', JSON.stringify(networkInfo));
+    // Pass additional parameters if needed.
+    formData.append('routerIP', "1.1.1.2");
+    formData.append('wifiSignalStrength', "-52Dm");
 
     try {
-      const res = await axios.post(
-        'https://ff56-120-60-211-151.ngrok-free.app/api/recognize',
-        formData,
-        {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        }
-      );
+      const res = await axios.post('http://localhost:8080/api/recognize', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       setResult(res.data);
     } catch (err) {
       setResult(err.response ? err.response.data : "Error occurred during recognition");
@@ -119,18 +94,28 @@ function AttendenceIn() {
     <div>
       <h2>Recognize Face via Camera</h2>
       <div>
+        <button onClick={() => setCaptureMode('video')}>Record Video</button>
+      </div>
+      <div>
         <video ref={videoRef} autoPlay style={{ width: "400px" }}></video>
-        <button onClick={captureImage}>Capture Image</button>
       </div>
       <div>
         <canvas ref={canvasRef} style={{ display: "none" }}></canvas>
-        {capturedImage && (
-          <img 
-            src={URL.createObjectURL(capturedImage)} 
-            alt="Captured" 
-            style={{ width: "200px", marginTop: "10px" }} 
-          />
+
+        {capturedMedia && captureMode === 'video' && (
+          <video 
+            src={URL.createObjectURL(capturedMedia)} 
+            controls 
+            style={{ width: "200px", marginTop: "10px" }}
+          ></video>
         )}
+      </div>
+      <div>
+        
+      <button onClick={startRecording} disabled={recording}>
+        {recording ? "Recording..." : "Record Video"}
+      </button>
+        
       </div>
       <button onClick={handleRecognize}>Recognize</button>
       {result && <p>{result}</p>}

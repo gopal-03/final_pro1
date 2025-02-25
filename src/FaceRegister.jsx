@@ -37,39 +37,36 @@ function FaceRegister() {
       canvas.height = video.videoHeight;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      // Convert the canvas image to a Blob
       canvas.toBlob((blob) => {
         setCapturedImage(blob);
       }, 'image/png');
     }
   };
 
-  // Send the captured image along with the name to the backend
+  // Send the captured image along with user details to the backend
   const handleRegister = async () => {
     if (!name || !capturedImage) {
-      setMessage("Please enter a name and capture an image.");
+      setMessage("Please enter your name and capture an image.");
       return;
     }
-
     if(password !== rePassword){
-      setMessage("password missmatch please verify your password");
+      setMessage("Password mismatch, please verify your password");
       return;
     }
 
     const formData = new FormData();
     formData.append('username', username);
     formData.append('name', name);
-    formData.append('mobNo',mobNo); 
-    formData.append('dept',dept);
-    formData.append('college',college);
-    formData.append('age',age);
-    formData.append('password',password);
-    // Convert Blob to File for compatibility with backend's MultipartFile handling
+    formData.append('mobNo', mobNo); 
+    formData.append('dept', dept);
+    formData.append('college', college);
+    formData.append('age', age);
+    formData.append('password', password);
     const file = new File([capturedImage], "capture.png", { type: 'image/png' });
     formData.append('file', file);
 
     try {
-      const res = await axios.post('https://ff56-120-60-211-151.ngrok-free.app/api/register', formData, {
+      const res = await axios.post('http://localhost:8080/api/register', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       setMessage(res.data);
@@ -87,60 +84,53 @@ function FaceRegister() {
         value={username}
         onChange={(e) => setUserName(e.target.value)}
       />
-
       <input 
         type="text"
         placeholder="Enter your Name"
         value={name}
         onChange={(e) => setName(e.target.value)}
       />
-
       <input 
         type="number"
         placeholder="Enter your Mobile No"
         value={mobNo}
         onChange={(e) => setMobNo(e.target.value)}
       />
-
       <input 
         type="text"
         placeholder="Enter your Department"
         value={dept}
         onChange={(e) => setDept(e.target.value)}
       />
-
-<input 
+      <input 
         type="text"
-        placeholder="Enter your College Namee"
+        placeholder="Enter your College Name"
         value={college}
         onChange={(e) => setCollege(e.target.value)}
       />
-
       <input 
         type="number"
         placeholder="Enter your Age"
         value={age}
         onChange={(e) => setAge(e.target.value)}
       />
-
       <input 
-        type="text"
+        type="password"
         placeholder="Enter your Password"
-        value={rePassword}
-        onChange={(e) => setRePassword(e.target.value)}
-      />
-      <input 
-        type="text"
-        placeholder="Re-Enter your Password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
+      />
+      <input 
+        type="password"
+        placeholder="Re-Enter your Password"
+        value={rePassword}
+        onChange={(e) => setRePassword(e.target.value)}
       />
       <div>
         <video ref={videoRef} autoPlay style={{ width: "400px" }}></video>
         <button onClick={captureImage}>Capture Image</button>
       </div>
       <div>
-        {/* Hidden canvas used for capturing the image */}
         <canvas ref={canvasRef} style={{ display: "none" }}></canvas>
         {capturedImage && (
           <img 

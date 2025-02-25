@@ -11,7 +11,7 @@ const AttendanceList = () => {
     setLoading(true);
     try {
       // Example: if the backend supports a date query parameter
-      const response = await axios.get(`https://ff56-120-60-211-151.ngrok-free.app/api/admin/attendancelist?date=${date}`);
+      const response = await axios.get(`http://localhost:8080/api/admin/attendancelist?date=${date}`);
       setAttendanceRecords(response.data);
     } catch (error) {
       console.error("Error fetching attendance", error);
