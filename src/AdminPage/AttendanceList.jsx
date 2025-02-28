@@ -2,102 +2,63 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
 const AttendanceList = () => {
-  const [attendanceRecords, setAttendanceRecords] = useState([]);
-  const [selectedDate, setSelectedDate] = useState('');
+  const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Helper function to get local date in YYYY-MM-DD format
-  const getLocalDate = () => {
-    const now = new Date();
-    const tzoffset = now.getTimezoneOffset() * 60000; // offset in milliseconds
-    return new Date(now - tzoffset).toISOString().split('T')[0];
-  };
+  // Define your API base URL
+  const apiBaseUrl = "https://6d09-120-56-188-160.ngrok-free.app/api/attendance";
 
-  // Function to fetch attendance records for a given date
-  const fetchAttendance = async (date) => {
-    setLoading(true);
-    try {
-      const response = await axios.get(
-        `https://51cb-120-56-188-160.ngrok-free.app/api/admin/attendancelist?date=${date}`
-      );
-      // Ensure that response data is an array.
-      const records = Array.isArray(response.data) ? response.data : [];
-      setAttendanceRecords(records);
-    } catch (error) {
-      console.error("Error fetching attendance", error);
-      setAttendanceRecords([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // On component mount, set the default date to local today and fetch attendance.
+  // Fetch all attendance records on mount
   useEffect(() => {
-    const today = getLocalDate();
-    setSelectedDate(today);
-    fetchAttendance(today);
-  }, []);
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const res = await axios.get(`${apiBaseUrl}/allattendancelist`);
+        setRecords(Array.isArray(res.data) ? res.data : []);
+      } catch (err) {
+        console.error(err);
+        setError("Failed to fetch attendance data.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [apiBaseUrl]);
 
-  // Update attendance when the date selection changes.
-  const handleDateChange = (e) => {
-    const newDate = e.target.value;
-    setSelectedDate(newDate);
-    fetchAttendance(newDate);
-  };
+  if (loading) return <p>Loading attendance...</p>;
+  if (error) return <p>{error}</p>;
+  if (records.length === 0) return <p>No attendance records found.</p>;
 
   return (
     <div style={{ padding: '20px' }}>
-      {/* Date picker at the top right */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
-        <input
-          type="date"
-          value={selectedDate}
-          onChange={handleDateChange}
-          style={{ padding: '5px', fontSize: '16px' }}
-        />
-      </div>
-      
-      {loading ? (
-        <p>Loading attendance...</p>
-      ) : (
-        <>
-          {attendanceRecords.length === 0 ? (
-            <p>No attendance records found for {selectedDate}</p>
-          ) : (
-            <table
-              border="1"
-              cellPadding="5"
-              cellSpacing="0"
-              style={{ width: '100%', borderCollapse: 'collapse' }}
-            >
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Mobile No</th>
-                  <th>Department</th>
-                  <th>Age</th>
-                  <th>College</th>
-                  <th>Date</th>
-                  <th>Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                {attendanceRecords.map((record) => (
-                  <tr key={record.id}>
-                    <td>{record.name}</td>
-                    <td>{record.mobno}</td>
-                    <td>{record.dept}</td>
-                    <td>{record.age}</td>
-                    <td>{record.college}</td>
-                    <td>{record.date}</td>
-                    <td>{record.time}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </>
-      )}
+      <h2>All Attendance Records</h2>
+      <table border="1" cellPadding="5" cellSpacing="0" style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Mobile No</th>
+            <th>Department</th>
+            <th>Age</th>
+            <th>College</th>
+            <th>Date</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          {records.map(record => (
+            <tr key={record.id}>
+              <td>{record.name}</td>
+              <td>{record.mobno}</td>
+              <td>{record.dept}</td>
+              <td>{record.age}</td>
+              <td>{record.college}</td>
+              <td>{record.date}</td>
+              <td>{record.time}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };

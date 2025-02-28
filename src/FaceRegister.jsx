@@ -66,7 +66,7 @@ function FaceRegister() {
     formData.append('file', file);
 
     try {
-      const res = await axios.post('https://51cb-120-56-188-160.ngrok-free.app/api/register', formData, {
+      const res = await axios.post('https://6d09-120-56-188-160.ngrok-free.app/api/register', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       setMessage(res.data);

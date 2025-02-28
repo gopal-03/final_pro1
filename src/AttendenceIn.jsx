@@ -1,106 +1,126 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 
-const AttendanceList = () => {
-  const [attendanceRecords, setAttendanceRecords] = useState([]);
-  const [selectedDate, setSelectedDate] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+function AttendenceIn() {
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const [result, setResult] = useState('');
+  const [captureMode, setCaptureMode] = useState('image'); // "image" or "video"
+  const [capturedMedia, setCapturedMedia] = useState(null);
+  const [recording, setRecording] = useState(false);
 
-  // Returns the local date in "YYYY-MM-DD" format.
-  const getLocalDateString = () => {
-    const now = new Date();
-    // Adjust for timezone offset so that the date reflects local time
-    const tzOffset = now.getTimezoneOffset() * 60000; 
-    return new Date(now - tzOffset).toISOString().split('T')[0];
-  };
+  // Start the camera stream on mount
+  useEffect(() => {
+    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+      .then((stream) => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      })
+      .catch((err) => {
+        console.error("Error accessing camera", err);
+      });
+  }, []);
 
-  const fetchAttendance = async (date) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await axios.get(
-        `https://74c6-120-60-34-101.ngrok-free.app/api/admin/attendancelist?date=${date}`
-      );
-      // Ensure that response data is an array.
-      const records = Array.isArray(response.data) ? response.data : [];
-      setAttendanceRecords(records);
-    } catch (err) {
-      console.error("Error fetching attendance", err);
-      setError("Error fetching attendance data.");
-      setAttendanceRecords([]);
-    } finally {
-      setLoading(false);
+  // Capture a still image
+  const captureImage = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (video && canvas) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => {
+        setCapturedMedia(blob);
+      }, 'image/png');
     }
   };
 
-  // On component mount, set default date to local today and fetch attendance.
-  useEffect(() => {
-    const today = getLocalDateString();
-    setSelectedDate(today);
-    fetchAttendance(today);
-  }, []);
+  // Record a short video clip (e.g., 3 seconds)
+  const startRecording = () => {
+    const stream = videoRef.current.srcObject;
+    if (!stream) return;
+    const options = { mimeType: 'video/webm' };
+    const mediaRecorder = new MediaRecorder(stream, options);
+    let chunks = [];
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) {
+        chunks.push(e.data);
+      }
+    };
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      setCapturedMedia(blob);
+      setRecording(false);
+    };
+    mediaRecorder.start();
+    setRecording(true);
+    // Automatically stop recording after 3 seconds
+    setTimeout(() => {
+      mediaRecorder.stop();
+    }, 3000);
+    mediaRecorderRef.current = mediaRecorder;
+  };
 
-  const handleDateChange = (e) => {
-    const newDate = e.target.value;
-    setSelectedDate(newDate);
-    fetchAttendance(newDate);
+  // Handle recognition by sending captured media to backend
+  const handleRecognize = async () => {
+    if (!capturedMedia) {
+      setResult("Please capture an image or record a video first.");
+      return;
+    }
+    const formData = new FormData();
+    // If video, the file name and MIME type will trigger the optical flow path in backend.
+    const fileName = captureMode === 'video' ? "capture.webm" : "capture.png";
+    const fileType = captureMode === 'video' ? "video/webm" : "image/png";
+    const file = new File([capturedMedia], fileName, { type: fileType });
+    formData.append('file', file);
+    // Pass additional parameters if needed.
+    formData.append('routerIP', "1.1.1.2");
+    formData.append('wifiSignalStrength', "-52Dm");
+
+    try {
+      const res = await axios.post('https://6d09-120-56-188-160.ngrok-free.app/api/recognize', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setResult(res.data);
+    } catch (err) {
+      setResult(err.response ? err.response.data : "Error occurred during recognition");
+    }
   };
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h2>Attendance List</h2>
-      {/* Date picker */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
-        <input
-          type="date"
-          value={selectedDate}
-          onChange={handleDateChange}
-          style={{ padding: '5px', fontSize: '16px' }}
-        />
+    <div>
+      <h2>Recognize Face via Camera</h2>
+      <div>
+        <button onClick={() => setCaptureMode('video')}>Record Video</button>
       </div>
-      
-      {loading ? (
-        <p>Loading attendance...</p>
-      ) : error ? (
-        <p>{error}</p>
-      ) : attendanceRecords.length === 0 ? (
-        <p>No attendance records found for {selectedDate}</p>
-      ) : (
-        <table 
-          style={{ width: '100%', borderCollapse: 'collapse' }} 
-          border="1" 
-          cellPadding="5" 
-          cellSpacing="0"
-        >
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Mobile No</th>
-              <th>Department</th>
-              <th>Age</th>
-              <th>College</th>
-              <th>Date</th>
-              <th>Time</th>
-            </tr>
-          </thead>
-          <tbody>
-            {attendanceRecords.map((record) => (
-              <tr key={record.id}>
-                <td>{record.name}</td>
-                <td>{record.mobno}</td>
-                <td>{record.dept}</td>
-                <td>{record.age}</td>
-                <td>{record.college}</td>
-                <td>{record.date}</td>
-                <td>{record.time}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <div>
+        <video ref={videoRef} autoPlay style={{ width: "400px" }}></video>
+      </div>
+      <div>
+        <canvas ref={canvasRef} style={{ display: "none" }}></canvas>
+
+        {capturedMedia && captureMode === 'video' && (
+          <video 
+            src={URL.createObjectURL(capturedMedia)} 
+            controls 
+            style={{ width: "200px", marginTop: "10px" }}
+          ></video>
+        )}
+      </div>
+      <div>
+        
+      <button onClick={startRecording} disabled={recording}>
+        {recording ? "Recording..." : "Record Video"}
+      </button>
+        
+      </div>
+      <button onClick={handleRecognize}>Recognize</button>
+      {result && <p>{result}</p>}
     </div>
   );
-};
+}
 
-export default AttendanceList;
+export default AttendenceIn;
