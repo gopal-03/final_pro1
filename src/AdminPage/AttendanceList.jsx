@@ -6,13 +6,23 @@ const AttendanceList = () => {
   const [selectedDate, setSelectedDate] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Helper function to get local date in YYYY-MM-DD format
+  const getLocalDate = () => {
+    const now = new Date();
+    const tzoffset = now.getTimezoneOffset() * 60000; // offset in milliseconds
+    return new Date(now - tzoffset).toISOString().split('T')[0];
+  };
+
   // Function to fetch attendance records for a given date
   const fetchAttendance = async (date) => {
     setLoading(true);
     try {
-      // Example: if the backend supports a date query parameter
-      const response = await axios.get(`https://74c6-120-60-34-101.ngrok-free.app/api/admin/attendancelist?date=${date}`);
-      setAttendanceRecords(response.data);
+      const response = await axios.get(
+        `https://51cb-120-56-188-160.ngrok-free.app/api/admin/attendancelist?date=${date}`
+      );
+      // Ensure that response data is an array.
+      const records = Array.isArray(response.data) ? response.data : [];
+      setAttendanceRecords(records);
     } catch (error) {
       console.error("Error fetching attendance", error);
       setAttendanceRecords([]);
@@ -21,14 +31,14 @@ const AttendanceList = () => {
     }
   };
 
-  // On component mount, set the default date to today and fetch today's attendance
+  // On component mount, set the default date to local today and fetch attendance.
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDate();
     setSelectedDate(today);
     fetchAttendance(today);
   }, []);
 
-  // Update attendance when the date selection changes
+  // Update attendance when the date selection changes.
   const handleDateChange = (e) => {
     const newDate = e.target.value;
     setSelectedDate(newDate);
@@ -39,10 +49,10 @@ const AttendanceList = () => {
     <div style={{ padding: '20px' }}>
       {/* Date picker at the top right */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
-        <input 
-          type="date" 
-          value={selectedDate} 
-          onChange={handleDateChange} 
+        <input
+          type="date"
+          value={selectedDate}
+          onChange={handleDateChange}
           style={{ padding: '5px', fontSize: '16px' }}
         />
       </div>
@@ -54,7 +64,12 @@ const AttendanceList = () => {
           {attendanceRecords.length === 0 ? (
             <p>No attendance records found for {selectedDate}</p>
           ) : (
-            <table border="1" cellPadding="5" cellSpacing="0" style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <table
+              border="1"
+              cellPadding="5"
+              cellSpacing="0"
+              style={{ width: '100%', borderCollapse: 'collapse' }}
+            >
               <thead>
                 <tr>
                   <th>Name</th>
