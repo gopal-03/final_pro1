@@ -81,7 +81,7 @@ function AttendenceIn() {
     formData.append('wifiSignalStrength', "-52Dm");
 
     try {
-      const res = await axios.post('http://192.168.1.11:8080/api/recognize', formData, {
+      const res = await axios.post('https://74c6-120-60-34-101.ngrok-free.app/api/recognize', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       setResult(res.data);

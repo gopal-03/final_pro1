@@ -21,7 +21,7 @@ const AdminRegistration = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://192.168.1.11:8080/api/admin/register', formData);
+      const response = await axios.post('https://74c6-120-60-34-101.ngrok-free.app/api/admin/register', formData);
       setMessage(response.data);
       navigate("/login");
     } catch (error) {
