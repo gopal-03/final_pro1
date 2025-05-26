@@ -9,6 +9,7 @@ function FaceRegister() {
   const [mobNo, setMobNo] = useState(0);
   const [dept, setDept] = useState('');
   const [college, setCollege] = useState('');
+  const [collegeUsername, setCollegeUserName] = useState('');
   const [age, setAge] = useState(0);
   const [rePassword, setRePassword] = useState('');
   const [password, setPassword] = useState('');
@@ -60,13 +61,14 @@ function FaceRegister() {
     formData.append('mobNo', mobNo); 
     formData.append('dept', dept);
     formData.append('college', college);
+    formData.append('collegeUsername',collegeUsername);
     formData.append('age', age);
     formData.append('password', password);
     const file = new File([capturedImage], "capture.png", { type: 'image/png' });
     formData.append('file', file);
 
     try {
-      const res = await axios.post('https://6d09-120-56-188-160.ngrok-free.app/api/register', formData, {
+      const res = await axios.post('http://192.168.1.7:8080/api/register', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       setMessage(res.data);
@@ -101,6 +103,12 @@ function FaceRegister() {
         placeholder="Enter your Department"
         value={dept}
         onChange={(e) => setDept(e.target.value)}
+      />
+      <input 
+        type="text"
+        placeholder="Enter your College Username"
+        value={collegeUsername}
+        onChange={(e) => setCollegeUserName(e.target.value)}
       />
       <input 
         type="text"

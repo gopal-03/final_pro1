@@ -11,7 +11,7 @@ const AdminDashboard = () => {
   };
 
   const handleRegisteredUsers = () => {
-    navigate('/registered-users', { state: { username } });
+    navigate("/admindashboard/registered-users");
   };
 
   return (

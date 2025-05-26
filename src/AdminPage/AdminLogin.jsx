@@ -18,7 +18,7 @@ const AdminLogin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('https://6d09-120-56-188-160.ngrok-free.app/api/admin/login', formData);
+      const response = await axios.post('http://192.168.1.7:8080/api/admin/login', formData);
       sessionStorage.setItem("username",formData.username);
       sessionStorage.setItem("collegeName",response.data);
       navigate("/admindashboard");
@@ -28,7 +28,7 @@ const AdminLogin = () => {
   };
 
   return (
-    <div>
+    <div className="container">
       <h2>Admin Login</h2>
       <form onSubmit={handleSubmit}>
         <div>
